@@ -23,23 +23,23 @@ public class SearchSpecification<T> implements Specification<T> {
 
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
-        Predicate predicate = cb.equal(cb.literal(Boolean.TRUE), Boolean.TRUE);
+        Predicate initialAndPredicates = cb.equal(cb.literal(Boolean.TRUE), Boolean.TRUE);
 
         for (FilterRequest filter : this.request.getFilters().getAndOperators()) {
             AndOperator funcBuildPredicate = AndOperator.valueOf(filter.getOperator());
-            predicate = funcBuildPredicate.build(root, cb, filter, predicate);
+            initialAndPredicates = funcBuildPredicate.build(root, cb, filter, initialAndPredicates);
         }
 
         if (!this.request.getFilters().getOrOperators().isEmpty()) {
             FilterRequest firstItem = this.request.getFilters().getOrOperators().get(0);
             OrOperator funcBuildPredicate = OrOperator.valueOf(firstItem.getOperator());
-            Predicate initialOrPredicate = funcBuildPredicate.build(root, cb, firstItem, null);
+            Predicate initialOrPredicates = funcBuildPredicate.build(root, cb, firstItem, null);
             List<FilterRequest> listRemainOrOperators =  this.request.getFilters().getOrOperators()
                     .subList(1, this.request.getFilters().getOrOperators().size());
             for (FilterRequest filter : listRemainOrOperators) {
-                initialOrPredicate = OrOperator.valueOf(filter.getOperator()).build(root, cb, filter, initialOrPredicate);
+                initialOrPredicates = OrOperator.valueOf(filter.getOperator()).build(root, cb, filter, initialOrPredicates);
             }
-            predicate = cb.and(initialOrPredicate, predicate);
+            initialAndPredicates = cb.and(initialOrPredicates, initialAndPredicates);
         }
 
         List<Order> orders = new ArrayList<>();
@@ -48,7 +48,7 @@ public class SearchSpecification<T> implements Specification<T> {
         }
 
         query.orderBy(orders);
-        return predicate;
+        return initialAndPredicates;
     }
 
     public static Pageable getPageable(Integer page, Integer size) {

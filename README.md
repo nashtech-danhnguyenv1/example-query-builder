@@ -4,11 +4,15 @@
 
 ![Spring Boot Data JPA Specification](images/spring-boot-data-jpa-specification.png)
 
-Spring data JPA provides many ways to deal with entities including query methods and custom JPQL queries. However, sometimes we need a more programmatic approach: for example Criteria API or QueryDSL.
+Spring data JPA provides many ways to deal with entities including query methods and custom JPQL queries. However,
+sometimes we need a more programmatic approach: for example Criteria API or QueryDSL.
 
-Spring Data JPA Specification provides a convenient and sophisticated manner to build dynamic SQL where clauses. By adding some extra logic and considering some pitfalls, we are capable of offering API consumers a zero-effort generic mechanism for filtering entities.
+Spring Data JPA Specification provides a convenient and sophisticated manner to build dynamic SQL where clauses. By
+adding some extra logic and considering some pitfalls, we are capable of offering API consumers a zero-effort generic
+mechanism for filtering entities.
 
-Specification are built on top of the Criteria API to simplify the developer experience. When building a Criteria query we are required to build and manage `Root`, `Criteria Query` and `Criteria Builder` object by ourselves.
+Specification are built on top of the Criteria API to simplify the developer experience. When building a Criteria query
+we are required to build and manage `Root`, `Criteria Query` and `Criteria Builder` object by ourselves.
 
 ### Project Setup and Dependency
 
@@ -17,28 +21,29 @@ I'm depending [Spring Initializr](https://start.spring.io/) for this as it is mu
 We need `spring-boot-starter-data-jpa`, `spring-boot-starter-web`, `lombok` and `h2database`. There is my `pom.xml`.
 
 ```xml
+
 <dependency>
-  <groupId>org.springframework.boot</groupId>
-  <artifactId>spring-boot-starter-data-jpa</artifactId>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
 </dependency>
 <dependency>
-  <groupId>org.springframework.boot</groupId>
-  <artifactId>spring-boot-starter-web</artifactId>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter-web</artifactId>
 </dependency>
 <dependency>
-  <groupId>com.h2database</groupId>
-  <artifactId>h2</artifactId>
-  <scope>runtime</scope>
+<groupId>com.h2database</groupId>
+<artifactId>h2</artifactId>
+<scope>runtime</scope>
 </dependency>
 <dependency>
-  <groupId>org.projectlombok</groupId>
-  <artifactId>lombok</artifactId>
-  <optional>true</optional>
+<groupId>org.projectlombok</groupId>
+<artifactId>lombok</artifactId>
+<optional>true</optional>
 </dependency>
 <dependency>
-  <groupId>org.springframework.boot</groupId>
-  <artifactId>spring-boot-starter-test</artifactId>
-  <scope>test</scope>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter-test</artifactId>
+<scope>test</scope>
 </dependency>
 ```
 
@@ -61,7 +66,8 @@ spring.jpa.hibernate.ddl-auto=update
 
 ### Implementation
 
-For the sake of simplicity, in the samples, we'll implement the same query in multiple ways: finding operating system by the name, the name containing String, release date between date, and kernel version in a values.
+For the sake of simplicity, in the samples, we'll implement the same query in multiple ways: finding operating system by
+the name, the name containing String, release date between date, and kernel version in a values.
 
 #### Designing Table
 
@@ -81,6 +87,7 @@ In this case, I will use table `operating_system` to simulate data to be develop
 Create `OperatingSystem` for Entity like below.
 
 ```java
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -109,7 +116,7 @@ public class OperatingSystem implements Serializable {
 
     @Column(name = "usages", nullable = false)
     private Integer usages;
-    
+
 }
 ```
 
@@ -117,9 +124,11 @@ public class OperatingSystem implements Serializable {
 
 **Enumeration of Field Type**
 
-Let's define enum of field type which is can be used to parse into data type. So, we can parse value into `BOOLEAN`, `CHAR`, `DATE`, `DOUBLE`, `INTEGER`, `LONG`, and `STRING`.
+Let's define enum of field type which is can be used to parse into data type. So, we can parse value into `BOOLEAN`
+, `CHAR`, `DATE`, `DOUBLE`, `INTEGER`, `LONG`, and `STRING`.
 
 ```java
+
 @Slf4j
 public enum FieldType {
 
@@ -183,6 +192,7 @@ public enum FieldType {
 A data contract for filter request there should be a `key`, `operator`, `value` and `fieldType`.
 
 ```java
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -213,6 +223,7 @@ public class FilterRequest implements Serializable {
 This is a logical for predicate of Criteria API likes `EQUAL`, `NOT_EQUAL`, `LIKE`, `IN`, and `BETWEEN`.
 
 ```java
+
 @Slf4j
 public enum Operator {
 
@@ -323,6 +334,7 @@ If I mapping the sort direction translated to be a sql query like table below.
 A data contract for sorting request there should be a `key` and `direction`.
 
 ```java
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -345,6 +357,7 @@ public class SortRequest implements Serializable {
 This is a main request that be used from REST API.
 
 ```java
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -378,9 +391,11 @@ public class SearchRequest implements Serializable {
 
 **Generic Class Search Specification**
 
-Last, we will create generic class that implements the Specification interface and going to pass in our own constraint to construct actual query.
+Last, we will create generic class that implements the Specification interface and going to pass in our own constraint
+to construct actual query.
 
 ```java
+
 @Slf4j
 @AllArgsConstructor
 public class SearchSpecification<T> implements Specification<T> {
@@ -421,6 +436,7 @@ public class SearchSpecification<T> implements Specification<T> {
 Next, take create repository and extending the `JPASpecificationExecutor` to get the new Specification APIs.
 
 ```java
+
 @Repository
 public interface OperatingSystemRepository extends JpaRepository<OperatingSystem, Long>,
         JpaSpecificationExecutor<OperatingSystem> {
@@ -432,6 +448,7 @@ public interface OperatingSystemRepository extends JpaRepository<OperatingSystem
 Create service to construct and build specification also pagination request into repository.
 
 ```java
+
 @Slf4j
 @Service
 public class OperatingSystemService {
@@ -451,6 +468,7 @@ public class OperatingSystemService {
 Create controller to receive of search request from REST.
 
 ```java
+
 @Slf4j
 @RestController
 @RequestMapping(value = "/operating-system", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -491,15 +509,19 @@ INSERT INTO operating_system (id, name, version, kernel, release_date, usages) V
 ![Insert Data to H2](images/h2-console-insert.png)
 
 Open `Postman` or `Thunder Client` or etc to test our API search operating system with request like below.
+http://localhost:8080/api/operating-system/search
 
 **Without Filter and Sorting**
 
 ```json
 {
-    "filters": [],
-    "sorts": [],
-    "page": null,
-    "size": null
+  "filters": {
+    "and_operators": [],
+    "or_operators": []
+  },
+  "sorts": [],
+  "page": null,
+  "size": null
 }
 ```
 
@@ -509,22 +531,31 @@ Filter name equal to CentOS
 
 ```json
 {
-    "filters": [
-        {
-            "key": "name",
-            "operator": "EQUAL",
-            "field_type": "STRING",
-            "value": "CentOS"
-        }
-    ],
-    "sorts": [
-        {
-            "key": "releaseDate",
-            "direction": "ASC"
-        }
-    ],
-    "page": null,
-    "size": null
+  "filters": {
+    "and_operators": [],
+    "or_operators": [
+      {
+        "key": "id",
+        "operator": "EQUAL",
+        "field_type": "STRING",
+        "value": 1
+      },
+      {
+        "key": "id",
+        "operator": "EQUAL",
+        "field_type": "STRING",
+        "value": 2
+      }
+    ]
+  },
+  "sorts": [
+    {
+      "key": "id",
+      "direction": "DESC"
+    }
+  ],
+  "page": null,
+  "size": null
 }
 ```
 
@@ -532,22 +563,25 @@ Filter name not equal to CentOS
 
 ```json
 {
-    "filters": [
-        {
-            "key": "name",
-            "operator": "NOT_EQUAL",
-            "field_type": "STRING",
-            "value": "CentOS"
-        }
+  "filters": {
+    "and_operators": [
+      {
+        "key": "name",
+        "operator": "NOT_EQUAL",
+        "field_type": "STRING",
+        "value": "CentOS"
+      }
     ],
-    "sorts": [
-        {
-            "key": "releaseDate",
-            "direction": "ASC"
-        }
-    ],
-    "page": null,
-    "size": null
+    "or_operators": []
+  },
+  "sorts": [
+    {
+      "key": "releaseDate",
+      "direction": "ASC"
+    }
+  ],
+  "page": null,
+  "size": null
 }
 ```
 
@@ -555,22 +589,25 @@ Filter name not equal to CentOS and size 1 response
 
 ```json
 {
-    "filters": [
-        {
-            "key": "name",
-            "operator": "NOT_EQUAL",
-            "field_type": "STRING",
-            "value": "CentOS"
-        }
+  "filters": {
+    "and_operators": [
+      {
+        "key": "name",
+        "operator": "NOT_EQUAL",
+        "field_type": "STRING",
+        "value": "CentOS"
+      }
     ],
-    "sorts": [
-        {
-            "key": "releaseDate",
-            "direction": "ASC"
-        }
-    ],
-    "page": null,
-    "size": 1
+    "or_operators": []
+  },
+  "sorts": [
+    {
+      "key": "releaseDate",
+      "direction": "ASC"
+    }
+  ],
+  "page": null,
+  "size": 1
 }
 ```
 
@@ -578,22 +615,25 @@ Filter name not equal to CentOS and size 1 response
 
 ```json
 {
-    "filters": [
-        {
-            "key": "name",
-            "operator": "LIKE",
-            "field_type": "STRING",
-            "value": "Red"
-        }
+  "filters": {
+    "and_operators": [
+      {
+        "key": "name",
+        "operator": "NOT_EQUAL",
+        "field_type": "STRING",
+        "value": "CentOS"
+      }
     ],
-    "sorts": [
-        {
-            "key": "releaseDate",
-            "direction": "DESC"
-        }
-    ],
-    "page": null,
-    "size": null
+    "or_operators": []
+  },
+  "sorts": [
+    {
+      "key": "releaseDate",
+      "direction": "DESC"
+    }
+  ],
+  "page": null,
+  "size": null
 }
 ```
 
@@ -601,17 +641,23 @@ Filter name not equal to CentOS and size 1 response
 
 ```json
 {
-    "filters": [
-        {
-            "key": "kernel",
-            "operator": "IN",
-            "field_type": "STRING",
-            "values": ["5.13", "5.8"]
-        }
+  "filters": {
+    "and_operators": [
+      {
+        "key": "kernel",
+        "operator": "IN",
+        "field_type": "STRING",
+        "values": [
+          "5.13",
+          "5.8"
+        ]
+      }
     ],
-    "sorts": [],
-    "page": null,
-    "size": null
+    "or_operators": []
+  },
+  "sorts": [],
+  "page": null,
+  "size": null
 }
 ```
 
@@ -621,18 +667,21 @@ Filter release date
 
 ```json
 {
-    "filters": [
-        {
-            "key": "releaseDate",
-            "operator": "BETWEEN",
-            "field_type": "DATE",
-            "value": "01-03-2022 00:00:00",
-            "value_to": "11-03-2022 23:59:59"
-        }
+  "filters": {
+    "and_operators": [
+      {
+        "key": "releaseDate",
+        "operator": "BETWEEN",
+        "field_type": "DATE",
+        "value": "01-03-2022 00:00:00",
+        "value_to": "11-03-2022 23:59:59"
+      }
     ],
-    "sorts": [],
-    "page": null,
-    "size": null
+    "or_operators": []
+  },
+  "sorts": [],
+  "page": null,
+  "size": null
 }
 ```
 
@@ -640,28 +689,35 @@ Filter usages
 
 ```json
 {
-    "filters": [
-        {
-            "key": "usages",
-            "operator": "BETWEEN",
-            "field_type": "INTEGER",
-            "value": 100,
-            "value_to": 250
-        }
+  "filters": {
+    "and_operators": [
+      {
+        "key": "usages",
+        "operator": "BETWEEN",
+        "field_type": "INTEGER",
+        "value": 100,
+        "value_to": 250
+      }
     ],
-    "sorts": [],
-    "page": null,
-    "size": null
+    "or_operators": []
+  },
+  "sorts": [],
+  "page": null,
+  "size": null
 }
 ```
 
 ### Conclusion
 
-JPA Specifications provide us with a way to write reusable queries and also fluent APIs with which we can combine and build more sophisticated queries.
+JPA Specifications provide us with a way to write reusable queries and also fluent APIs with which we can combine and
+build more sophisticated queries.
 
-The problem of searching and filtering is trivial to all modern day applications and the Spring Data JPA Specification provides a neat and elegant way to create dynamic queries. Please share your thoughts and suggestions on how you would like to solve the problem of searching and filtering.
+The problem of searching and filtering is trivial to all modern day applications and the Spring Data JPA Specification
+provides a neat and elegant way to create dynamic queries. Please share your thoughts and suggestions on how you would
+like to solve the problem of searching and filtering.
 
-Spring data JPA repository abstraction allows executing predicates via JPA Criteria API predicates wrapped into a Specification object. To enable this functionality you simply let your repository extend `JpaSpecificationExecutor`.
+Spring data JPA repository abstraction allows executing predicates via JPA Criteria API predicates wrapped into a
+Specification object. To enable this functionality you simply let your repository extend `JpaSpecificationExecutor`.
 
 ### Clone on Github
 
